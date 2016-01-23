@@ -41,7 +41,7 @@ var (
 	ErrMaxPlayers = errors.New("cannot add more than 4 players")
 )
 
-func New(height, width int, needed int) (*Field, error) {
+func NewField(height, width int, needed int) (*Field, error) {
 	if needed > 4 {
 		return nil, ErrMaxPlayers
 	}
