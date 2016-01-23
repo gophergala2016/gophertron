@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/gophergala2016/gophertron/models"
+	"github.com/gorilla/websocket"
 )
 
 var (
@@ -47,6 +48,12 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	mu.Unlock()
 }
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(_ *http.Request) bool {
+		return true
+	},
+}
+
 func Join(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	mu.RLock()
@@ -57,5 +64,14 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gopher := &models.Gopher{}
-	err := field.Add(gopher)
+	index, err := field.Add(gopher)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	go listener(conn, index, field)
 }
