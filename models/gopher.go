@@ -1,6 +1,6 @@
 package models
 
-type Direction byte
+type Direction int
 
 const (
 	North Direction = 1 << iota
