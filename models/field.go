@@ -65,12 +65,12 @@ func NewField(height, width int, needed int) (*Field, error) {
 	return field, nil
 }
 
-func (f *Field) Add(g *Gopher) error {
+func (f *Field) Add(g *Gopher) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	if f.State == InProgress {
-		return ErrInProgress
+		return 0, ErrInProgress
 	}
 
 	f.Gophers = append(f.Gophers, g)
@@ -99,7 +99,7 @@ func (f *Field) Add(g *Gopher) error {
 		go f.start()
 	}
 
-	return nil
+	return len(f.Gophers) - 1, nil
 }
 
 func (f *Field) setPos(g *Gopher, X, Y int) {
