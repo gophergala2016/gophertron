@@ -18,8 +18,5 @@ type Gopher struct {
 	Direction Direction
 	X, Y      int
 	Path      []Coordinate
-}
-
-func (g *Gopher) Increment() {
-
+	Score     int
 }
