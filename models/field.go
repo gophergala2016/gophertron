@@ -11,9 +11,21 @@ type ChangeDirection struct {
 }
 
 type Field struct {
+	Height, Width int
+	needed        int //number of players needed to start the game
+
 	Gophers []*Gopher
-	Board   [100][100]bool
-	Change  chan ChangeDirection
+	Board   [][]bool
+
+	Change chan ChangeDirection
+	Remove chan *Gopher
+
+	mu         *sync.RWMutex
+	inProgress bool
+
+	cycles int
+}
+
 func New(height, width int) *Field {
 	field := &Field{
 		Height: height,
