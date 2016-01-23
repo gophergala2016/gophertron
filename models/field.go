@@ -32,6 +32,21 @@ func New(height, width int) *Field {
 }
 
 func (f *Field) Add(g *Gopher) error {
+	f.mu.RLock()
+
+	if f.inProgress {
+		f.mu.RUnlock()
+		return ErrInProgress
+	}
+	f.mu.RUnlock()
+
+	f.Gophers = append(f.Gophers, g)
+	if len(f.Gophers) == f.needed {
+		f.mu.Lock()
+		f.inProgress = true
+		f.mu.Unlock()
+		go f.start()
+	}
 
 	return nil
 }
