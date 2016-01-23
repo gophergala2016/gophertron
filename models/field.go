@@ -1,7 +1,9 @@
 package models
 
 import (
+	"errors"
 	"sync"
+	"time"
 )
 
 type ChangeDirection struct {
@@ -25,6 +27,8 @@ type Field struct {
 
 	cycles int
 }
+
+var ErrInProgress = errors.New("Game is already in progress.")
 
 func New(height, width int) *Field {
 	field := &Field{
@@ -84,7 +88,7 @@ func (f *Field) increment(g *Gopher) bool {
 		g.X--
 	}
 
-	if g.X == 100 || g.Y == 100 {
+	if g.X == f.Height || g.Y == f.Width {
 		return true
 	}
 	if f.Board[g.X][g.Y] {
@@ -92,6 +96,14 @@ func (f *Field) increment(g *Gopher) bool {
 	}
 
 	f.Board[g.X][g.Y] = true
+	g.Score++
+
+	if f.cycles > 10 {
+		f.Board[g.Path[0].X][g.Path[0].Y] = false
+	} else {
+		f.cycles++
+	}
+
 	return false
 }
 
@@ -101,42 +113,43 @@ func (f *Field) clearPath(g *Gopher) {
 	}
 }
 
-func (f *Field) Start() {
+func (f *Field) start() {
+	tick := time.NewTicker(100 * time.Millisecond)
 	for {
 		select {
 		case dir := <-f.Change:
 			dir.Gopher.Direction = dir.Direction
 			dir.Wait.Done()
-		default:
-			for i, gopher := range f.Gophers {
+		case gopher := <-f.Remove:
 			f.remove(gopher)
 			if len(f.Gophers) == 1 {
 				f.end()
 				return
 			}
+		case <-tick.C:
+			for _, gopher := range f.Gophers {
 				if f.increment(gopher) {
 					//gopher collided, clear it's path and remove it
 					//from the field
 					f.clearPath(gopher)
-					f.Gophers, f.Gophers[len(f.Gophers)-1] = append(f.Gophers[:i], f.Gophers[i+1:]...), nil
 					f.remove(gopher)
 
 					if len(f.Gophers) == 1 {
-						f.End()
 						f.end()
 						return
 					}
 				}
-				f.Broadcast()
+
+				f.broadcast()
 			}
 		}
 	}
 }
 
-func (f *Field) End() {
+func (f *Field) end() {
 
 }
 
-func (f *Field) Broadcast() {
+func (f *Field) broadcast() {
 
 }
