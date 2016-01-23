@@ -51,6 +51,14 @@ func (f *Field) Add(g *Gopher) error {
 	return nil
 }
 
+func (f *Field) remove(gopher *Gopher) {
+	for i, currGopher := range f.Gophers {
+		if currGopher == gopher {
+			f.Gophers, f.Gophers[len(f.Gophers)-1] = append(f.Gophers[:i], f.Gophers[i+1:]...), nil
+		}
+	}
+}
+
 func (f *Field) increment(g *Gopher) bool {
 	g.Path = append(g.Path, Coordinate{g.X, g.Y})
 	switch g.Direction {
@@ -89,13 +97,21 @@ func (f *Field) Start() {
 			dir.Wait.Done()
 		default:
 			for i, gopher := range f.Gophers {
+			f.remove(gopher)
+			if len(f.Gophers) == 1 {
+				f.end()
+				return
+			}
 				if f.increment(gopher) {
 					//gopher collided, clear it's path and remove it
 					//from the field
 					f.clearPath(gopher)
 					f.Gophers, f.Gophers[len(f.Gophers)-1] = append(f.Gophers[:i], f.Gophers[i+1:]...), nil
+					f.remove(gopher)
+
 					if len(f.Gophers) == 1 {
 						f.End()
+						f.end()
 						return
 					}
 				}
