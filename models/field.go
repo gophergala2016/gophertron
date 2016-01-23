@@ -14,6 +14,21 @@ type Field struct {
 	Gophers []*Gopher
 	Board   [100][100]bool
 	Change  chan ChangeDirection
+func New(height, width int) *Field {
+	field := &Field{
+		Height: height,
+		Width:  width,
+		Board:  make([][]bool, height),
+		Change: make(chan ChangeDirection),
+		Remove: make(chan *Gopher),
+		mu:     new(sync.RWMutex),
+	}
+
+	for i := range field.Board {
+		field.Board[i] = make([]bool, width)
+	}
+
+	return field
 }
 
 func (f *Field) Add(g *Gopher) error {
