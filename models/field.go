@@ -8,7 +8,7 @@ import (
 )
 
 type ChangeDirection struct {
-	Gopher    *Gopher
+	Index     int
 	Direction Direction
 	Wait      *sync.WaitGroup
 }
@@ -173,7 +173,7 @@ func (f *Field) start() {
 	channel := make(chan struct{})
 
 	switch f.nextCycle.(type) {
-	case time.Ticker:
+	case *time.Ticker:
 		go func() {
 			for {
 				<-f.nextCycle.(time.Ticker).C
@@ -192,7 +192,7 @@ func (f *Field) start() {
 	for {
 		select {
 		case dir := <-f.Change:
-			dir.Gopher.Direction = dir.Direction
+			f.Gophers[dir.Index].Direction = dir.Direction
 			dir.Wait.Done()
 		case gopher := <-f.Remove:
 			f.remove(gopher)
