@@ -174,12 +174,6 @@ func (f *Field) PrintBoard() {
 
 func (f *Field) increment(g *Gopher) bool {
 	g.Path = append(g.Path, Coordinate{g.X, g.Y})
-	if (g.X == -1 || g.X == f.Width) || (g.Y == -1 || g.Y == f.Height) {
-		//collision detected
-		log.Println("bounds")
-		return true
-	}
-
 	switch g.Direction {
 	case Up:
 		g.Y--
@@ -191,6 +185,11 @@ func (f *Field) increment(g *Gopher) bool {
 		g.X++
 	}
 
+	if (g.X == -1 || g.X == f.Width) || (g.Y == -1 || g.Y == f.Height) {
+		//collision detected
+		return true
+	}
+
 	if f.Board[g.X][g.Y] {
 		return true
 	}
@@ -198,7 +197,7 @@ func (f *Field) increment(g *Gopher) bool {
 	f.Board[g.X][g.Y] = true
 	g.Score++
 
-	if f.cycles > 1000 {
+	if f.cycles > 500 {
 		f.Board[g.Path[0].X][g.Path[0].Y] = false
 		g.Path = append(g.Path[:0], g.Path[1:]...)
 	} else {
