@@ -10,7 +10,7 @@ import (
 )
 
 var addr = flag.String("http", "localhost:8080", "http service address")
-var prof = flag.Bool("prof", false, "profile")
+var prof = flag.Bool("prof", false, "enable's profiling with gom")
 
 func main() {
 	flag.Parse()
