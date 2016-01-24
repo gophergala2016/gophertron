@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"html/template"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -108,13 +107,15 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Println("Added ", index)
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
+	if len(field.Gophers) == field.Needed {
+		conn.WriteMessage(websocket.TextMessage, []byte("notification"))
+	}
 
 	go listener(conn, index, field)
-	go sendPath(conn, gopher.Paths, gopher.Close)
+	go sendPath(conn, gopher.Paths, gopher.Close, gopher.Notify)
 }
