@@ -46,7 +46,7 @@ window.addEventListener('load', function () {
     ws.onopen = function() {
 	console.log("Connected!")
 	ws.onmessage = function(evt) {
-            if evt.data == "countdown" {
+            if (evt.data == "countdown") {
 		for (i = 0; i < 3; i++){
 		    toastr["info"]("Starting in 3");
 		    sleep(1);
