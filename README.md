@@ -31,5 +31,5 @@ A demo deployment is available at http://gophertron.gcommer.com/. Due to network
 * Some tiny gaps between walls and players on collision aren't filled well.
 * No score-keeping.
 * All players have the same color.
-* Lack of code documentation, since there was a single developer who didn't care to document the code.
+* Lack of code documentation, since there was a single developer who didn't care about documentation.
 * Lack of tests
