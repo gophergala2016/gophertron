@@ -6,6 +6,8 @@ A 2D [Tron](https://en.wikipedia.org/wiki/Tron_(video_game)) clone in Go. Allows
 # Install:
 `go get github.com/gophergala2016/gophertron`
 
+A demo deployment is available at http://gophertron.gcommer.com/. Due to network constraints, a visible amount of lag is apparent, so the best way to use it would be to set up a local instance.
+
 # Usage:
 ```
   -http string
