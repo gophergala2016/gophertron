@@ -53,7 +53,7 @@ func listener(conn *websocket.Conn, ID int, field *models.Field) {
 	}
 }
 
-func sendPath(conn *websocket.Conn, paths chan map[int][]models.Coordinate, close chan struct{}) {
+func sendPath(conn *websocket.Conn, paths chan map[string][]models.Coordinate, close chan struct{}) {
 	mu := new(sync.Mutex)
 
 	for {
@@ -61,7 +61,10 @@ func sendPath(conn *websocket.Conn, paths chan map[int][]models.Coordinate, clos
 		case paths := <-paths:
 			go func() {
 				mu.Lock()
-				conn.WriteJSON(paths)
+				err := conn.WriteJSON(paths)
+				if err != nil {
+					log.Println(err)
+				}
 				mu.Unlock()
 			}()
 		case <-close:
