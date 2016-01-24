@@ -16,6 +16,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	height, err := strconv.Atoi(values.Get("height"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	width, err := strconv.Atoi(values.Get("width"))
