@@ -33,9 +33,9 @@ ws.onopen = function() {
         //console.log(evt.data)
 	var paths = JSON.parse(evt.data)
 	for (id in paths) {
-	    ctx.moveTo(paths[id].coordinate[0].X, paths[id].coordinate[0].Y)
+	    ctx.moveTo(paths[id].coordinate[0].X*10, paths[id].coordinate[0].Y*10)
 	    for (i in paths[id].coordinate) {
-		ctx.lineTo(paths[id].coordinate[i].X, paths[id].coordinate[i].Y)
+		ctx.lineTo(paths[id].coordinate[i].X*10, paths[id].coordinate[i].Y*10)
 	    }
             
             ctx.strokeStyle = paths[id].color 
