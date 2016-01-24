@@ -36,9 +36,8 @@ type Field struct {
 	Change chan ChangeDirection
 	Remove chan int
 
-	State     int
-	cycles    int
-	nextCycle interface{}
+	State  int
+	cycles int
 }
 
 var (
@@ -78,16 +77,15 @@ func NewField(height, width int, needed int) (*Field, error) {
 	id := base64.URLEncoding.EncodeToString(bytes)
 
 	field := &Field{
-		ID:        id,
-		Height:    height,
-		needed:    needed,
-		Width:     width,
-		Board:     make([][]bool, height),
-		Change:    make(chan ChangeDirection),
-		Remove:    make(chan int),
-		mu:        new(sync.Mutex),
-		State:     Initializing,
-		nextCycle: time.NewTicker(100 * time.Millisecond),
+		ID:     id,
+		Height: height,
+		needed: needed,
+		Width:  width,
+		Board:  make([][]bool, height),
+		Change: make(chan ChangeDirection),
+		Remove: make(chan int),
+		mu:     new(sync.Mutex),
+		State:  Initializing,
 	}
 
 	for i := range field.Board {
@@ -117,10 +115,10 @@ func (f *Field) Add(g *Gopher) (int, error) {
 		Y int
 		D Direction
 	}{
-		{f.Width / 2, 0, North},
-		{0, f.Height / 2, East},
-		{f.Width / 2, f.Height - 1, South},
-		{f.Width - 1, f.Height / 2, West},
+		{f.Width / 2, 0, Down},
+		{0, f.Height / 2, Right},
+		{f.Width / 2, f.Height - 1, Up},
+		{f.Width - 1, f.Height / 2, Left},
 	}
 	for _, pos := range initPositions {
 		if !f.Board[pos.X][pos.Y] {
@@ -131,7 +129,7 @@ func (f *Field) Add(g *Gopher) (int, error) {
 	}
 
 	if len(f.Gophers) == f.needed {
-		f.State = Ended
+		f.State = InProgress
 		go f.start()
 	}
 
@@ -150,6 +148,7 @@ func (f *Field) remove(gopher *Gopher) {
 			f.Gophers, f.Gophers[len(f.Gophers)-1] = append(f.Gophers[:i], f.Gophers[i+1:]...), nil
 		}
 	}
+	gopher.Close <- false
 }
 
 func (f *Field) PrintBoard() {
@@ -170,14 +169,14 @@ func (f *Field) PrintBoard() {
 func (f *Field) increment(g *Gopher) bool {
 	g.Path = append(g.Path, Coordinate{g.X, g.Y})
 	switch g.Direction {
-	case North:
-		g.Y++
-	case South:
+	case Up:
 		g.Y--
-	case East:
-		g.X++
-	case West:
+	case Down:
+		g.Y++
+	case Left:
 		g.X--
+	case Right:
+		g.X++
 	}
 
 	if g.X == f.Height || g.Y == f.Width {
@@ -209,12 +208,24 @@ func (f *Field) start() {
 	log.Printf("%s: Starting main game loop.", f.ID)
 	tick := time.NewTicker(10 * time.Millisecond)
 	defer tick.Stop()
+	mapMu.Lock()
+	delete(activeFields, f.ID)
+	mapMu.Unlock()
+
 	for {
 		select {
 		case dir := <-f.Change:
 			if f.State != InProgress {
 				continue
 			}
+			currDir := f.Gophers[dir.Index].Direction
+			if (currDir == Up || currDir == Down) && (dir.Direction == Up || dir.Direction == Down) {
+				continue
+			}
+			if (currDir == Left || currDir == Right) && (dir.Direction == Left || dir.Direction == Right) {
+				continue
+			}
+
 			f.Gophers[dir.Index].Direction = dir.Direction
 			dir.Wait.Done()
 		case index := <-f.Remove:
@@ -249,22 +260,30 @@ func (f *Field) end() {
 	f.mu.Lock()
 	f.State = Ended
 	f.mu.Unlock()
-	if _, ok := f.nextCycle.(*time.Ticker); ok {
-		f.nextCycle.(*time.Ticker).Stop()
+
+	if len(f.Gophers) != 0 {
+		f.Gophers[0].Close <- true
 	}
-	mapMu.Lock()
-	delete(activeFields, f.ID)
-	mapMu.Unlock()
+}
+
+var colors = []string{"#b71c1c", "#880E4F", "#4A148C", "#1A237E"}
+
+type GopherInfo struct {
+	Coordinate []Coordinate `json:"coordinate"`
+	Color      string       `json:"color"`
 }
 
 func (f *Field) broadcast() {
-	paths := make(map[string][]Coordinate)
+	paths := make(map[string]GopherInfo)
 	for i, gopher := range f.Gophers {
 		index := strconv.Itoa(i)
+		var coordinates []Coordinate
 		for _, c := range gopher.Path {
-			paths[index] = append(paths[index], c)
+			coordinates = append(coordinates, c)
+			//paths[index].Coordinate = append(paths[index].Coordinate, c)
 		}
 
+		paths[index] = GopherInfo{coordinates, colors[i]}
 		gopher.Paths <- paths
 	}
 }

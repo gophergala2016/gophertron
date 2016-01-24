@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -66,7 +67,22 @@ func Join(w http.ResponseWriter, r *http.Request) {
 }
 
 func Game(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "views/game.html")
+	cookie, err := r.Cookie("game-id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	field, ok := models.GetGame(cookie.Value)
+	if !ok {
+		http.Error(w, "Couldn't find game", 404)
+		return
+	}
+
+	templ := template.Must(template.ParseFiles("./views/game.html"))
+	templ.Execute(w, map[string]interface{}{
+		"height": field.Height,
+		"width":  field.Width,
+	})
 }
 
 func WebSocket(w http.ResponseWriter, r *http.Request) {

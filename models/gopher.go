@@ -3,10 +3,10 @@ package models
 type Direction int
 
 const (
-	North Direction = 1 << iota
-	South
-	East
-	West
+	Up Direction = iota
+	Down
+	Left
+	Right
 )
 
 type Coordinate struct {
@@ -20,13 +20,13 @@ type Gopher struct {
 	X, Y      int
 	Path      []Coordinate
 	Score     int
-	Paths     chan map[string][]Coordinate
-	Close     chan struct{}
+	Paths     chan map[string]GopherInfo
+	Close     chan bool
 }
 
 func NewGopher() *Gopher {
 	return &Gopher{
-		Paths: make(chan map[string][]Coordinate),
-		Close: make(chan struct{}),
+		Paths: make(chan map[string]GopherInfo),
+		Close: make(chan bool),
 	}
 }

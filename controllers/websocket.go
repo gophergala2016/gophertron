@@ -10,10 +10,10 @@ import (
 )
 
 var dirMap = map[string]models.Direction{
-	"north": models.North,
-	"south": models.South,
-	"east":  models.East,
-	"west":  models.West,
+	"up":    models.Up,
+	"down":  models.Down,
+	"left":  models.Left,
+	"right": models.Right,
 }
 
 func listener(conn *websocket.Conn, ID int, field *models.Field) {
@@ -22,8 +22,8 @@ func listener(conn *websocket.Conn, ID int, field *models.Field) {
 		select {
 		case <-tick.C:
 			var req struct {
-				Request string
-				Param   string
+				Request string `json:"request"`
+				Param   string `json:"param"`
 			}
 
 			err := conn.ReadJSON(&req)
@@ -53,7 +53,7 @@ func listener(conn *websocket.Conn, ID int, field *models.Field) {
 	}
 }
 
-func sendPath(conn *websocket.Conn, paths chan map[string][]models.Coordinate, close chan struct{}) {
+func sendPath(conn *websocket.Conn, paths chan map[string]models.GopherInfo, close chan bool) {
 	mu := new(sync.Mutex)
 
 	for {
@@ -68,6 +68,7 @@ func sendPath(conn *websocket.Conn, paths chan map[string][]models.Coordinate, c
 				mu.Unlock()
 			}()
 		case <-close:
+			conn.Close()
 			return
 		}
 	}

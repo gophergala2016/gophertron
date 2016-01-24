@@ -1,0 +1,5 @@
+<html>
+  {{range $id, $e := .}}
+  <a href="/join?id={{$id}}">{{len $e.Gophers}}</a>
+  {{end}}
+</html>
