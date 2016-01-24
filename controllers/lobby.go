@@ -1,19 +1,11 @@
 package controllers
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"net/http"
 	"strconv"
-	"sync"
 
 	"github.com/gophergala2016/gophertron/models"
 	"github.com/gorilla/websocket"
-)
-
-var (
-	mu    = new(sync.RWMutex)
-	games = make(map[string]*models.Field)
 )
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -34,18 +26,11 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	field, err := models.NewField(height, width, needed)
+	_, err = models.NewField(height, width, needed)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	bytes := make([]byte, 10)
-	rand.Read(bytes)
-	id := base64.URLEncoding.EncodeToString(bytes)
-	mu.Lock()
-	games[id] = field
-	mu.Unlock()
 }
 
 var upgrader = websocket.Upgrader{
@@ -56,14 +41,13 @@ var upgrader = websocket.Upgrader{
 
 func Join(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	mu.RLock()
-	field, ok := games[id]
-	mu.RUnlock()
+	field, ok := models.GetGame(id)
 	if !ok {
-		http.Error(w, "Couldn't find lobby.", http.StatusNotFound)
+		http.Error(w, "Couldn't find game", 404)
+		return
 	}
 
-	gopher := &models.Gopher{}
+	gopher := models.NewGopher()
 	index, err := field.Add(gopher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -73,5 +57,7 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+
 	go listener(conn, index, field)
+	go sendPath(conn, gopher.Paths, gopher.Close)
 }
