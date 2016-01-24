@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"encoding/json"
+
 	"github.com/gophergala2016/gophertron/models"
 	"github.com/gorilla/websocket"
 )
@@ -53,21 +55,35 @@ func listener(conn *websocket.Conn, ID int, field *models.Field) {
 	}
 }
 
-func sendPath(conn *websocket.Conn, paths chan map[string]models.GopherInfo, close chan bool) {
-	mu := new(sync.Mutex)
+func sendPath(conn *websocket.Conn, paths chan map[string]models.GopherInfo, close chan bool, notify chan struct{}) {
+	send := make(chan []byte)
+	wait := new(sync.WaitGroup)
+
+	go func() {
+		for {
+			msg := <-send
+			go func() {
+				conn.WriteMessage(websocket.TextMessage, msg)
+				wait.Done()
+			}()
+		}
+	}()
 
 	for {
 		select {
 		case paths := <-paths:
-			go func() {
-				mu.Lock()
-				err := conn.WriteJSON(paths)
-				if err != nil {
-					log.Println(err)
-				}
-				mu.Unlock()
-			}()
-		case <-close:
+			wait.Add(1)
+			bytes, _ := json.Marshal(paths)
+			send <- bytes
+		case <-notify:
+			wait.Add(1)
+			send <- []byte("countdown")
+		case victory := <-close:
+			if victory {
+				wait.Add(1)
+				send <- []byte("victory")
+			}
+			wait.Wait()
 			conn.Close()
 			return
 		}
