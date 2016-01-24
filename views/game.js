@@ -35,11 +35,18 @@ window.addEventListener('load', function () {
 
     ctx.fillText("Waiting for players",10,50);
 
-     ws.onopen = function() {
+    ws.onopen = function() {
 	console.log("Connected!")
+	var inprogress = false;
+
 	ws.onmessage = function(evt) {
             if (event.data == "countdown") {
 		toastr["info"]("Game starting in 5 seconds")
+		window.setTimeout(function() {
+		    console.log("sent trigger")
+		    ws.send("f") //triggers the acutal listener
+		    inprogress = true
+		}, 5000)
 		return
             }
 	    if (event.data == "victory") {
@@ -62,7 +69,11 @@ window.addEventListener('load', function () {
 		ctx.stroke();
 	    }
 	}
+	
 	document.onkeydown = function(e) {
+	    if (!inprogress) {
+		return
+	    }
 	    e = e || window.event;
 	    var js = {"request": "move"};
 	    
