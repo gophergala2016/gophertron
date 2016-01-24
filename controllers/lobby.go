@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gophergala2016/gophertron/models"
 	"github.com/gorilla/websocket"
@@ -20,17 +22,22 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	needed, err := strconv.Atoi(values.Get("needed"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if needed == 1 || needed == 0 {
+		return
+	}
 
-	_, err = models.NewField(height, width, needed)
+	field, err := models.NewField(height, width, needed)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	http.Redirect(w, r, "/join?id="+field.ID, http.StatusTemporaryRedirect)
 }
 
 var upgrader = websocket.Upgrader{
@@ -41,7 +48,37 @@ var upgrader = websocket.Upgrader{
 
 func Join(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-	field, ok := models.GetGame(id)
+	//log.Println(id)
+	_, ok := models.GetGame(id)
+	if !ok {
+		http.Error(w, "Couldn't find game", 404)
+		return
+	}
+
+	cookie := http.Cookie{
+		Name:    "game-id",
+		Value:   id,
+		Expires: time.Now().Add(100 * time.Second),
+	}
+	http.SetCookie(w, &cookie)
+
+	http.Redirect(w, r, "/game", http.StatusTemporaryRedirect)
+}
+
+func Game(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "views/game.html")
+}
+
+func WebSocket(w http.ResponseWriter, r *http.Request) {
+	//log.Println("reached")
+	cookie, err := r.Cookie("game-id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//log.Println(cookie)
+	field, ok := models.GetGame(cookie.Value)
 	if !ok {
 		http.Error(w, "Couldn't find game", 404)
 		return
@@ -53,6 +90,8 @@ func Join(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	log.Println("Added ", index)
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
