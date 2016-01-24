@@ -81,8 +81,9 @@ func Game(w http.ResponseWriter, r *http.Request) {
 
 	templ := template.Must(template.ParseFiles("./views/game.html"))
 	templ.Execute(w, map[string]interface{}{
-		"height": field.Height,
-		"width":  field.Width,
+		//multiply by ten to get a bigger canvas
+		"height": field.Height * 10,
+		"width":  field.Width * 10,
 	})
 }
 
