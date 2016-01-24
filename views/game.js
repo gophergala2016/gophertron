@@ -1,6 +1,4 @@
 window.addEventListener('load', function () {
-    console.log("hi");
-    
     toastr.options = {
 	"closeButton": false,
 	"debug": false,
@@ -9,16 +7,15 @@ window.addEventListener('load', function () {
 	"positionClass": "toast-top-right",
 	"preventDuplicates": false,
 	"onclick": null,
-	"showDuration": "1",
-	"hideDuration": "1",
-	"timeOut": "1",
+	"showDuration": "300",
+	"hideDuration": "1000",
+	"timeOut": "5000",
 	"extendedTimeOut": "1000",
 	"showEasing": "swing",
 	"hideEasing": "linear",
 	"showMethod": "fadeIn",
 	"hideMethod": "fadeOut"
     };
-    toastr["success"]("hello");
     
     var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
@@ -38,20 +35,18 @@ window.addEventListener('load', function () {
 
     ctx.fillText("Waiting for players",10,50);
 
-    function sleep(duration){
-	var now = new Date().getTime();
-	while(new Date().getTime() < now + duration){} 
-    }
-
-    ws.onopen = function() {
+     ws.onopen = function() {
 	console.log("Connected!")
 	ws.onmessage = function(evt) {
-            if (evt.data == "countdown") {
-		for (i = 0; i < 3; i++){
-		    toastr["info"]("Starting in 3");
-		    sleep(1);
-		}
+            if (event.data == "countdown") {
+		toastr["info"]("Game starting in 5 seconds")
+		return
             }
+	    if (event.data == "victory") {
+		toastr["success"]("You won!")
+		return
+	    }
+	    
 	    ctx.clearRect(0,0,canvas.width, canvas.height);
             ctx.beginPath();
             ctx.lineWidth=10;
