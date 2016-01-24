@@ -1,6 +1,8 @@
 package models
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"sync"
@@ -22,6 +24,7 @@ const (
 type Field struct {
 	mu *sync.Mutex //initially used while adding players
 
+	id            string
 	Height, Width int
 	needed        int //number of players needed to start the game
 
@@ -29,7 +32,7 @@ type Field struct {
 	Board   [][]bool
 
 	Change chan ChangeDirection
-	Remove chan *Gopher
+	Remove chan int
 
 	State     int
 	cycles    int
@@ -39,20 +42,47 @@ type Field struct {
 var (
 	ErrInProgress = errors.New("game is already in progress")
 	ErrMaxPlayers = errors.New("cannot add more than 4 players")
+	mapMu         = new(sync.RWMutex)
+	activeFields  = make(map[string]*Field)
 )
+
+func GetGames() map[string]*Field {
+	games := make(map[string]*Field)
+	mapMu.RLock()
+	defer mapMu.RUnlock()
+
+	for id, field := range activeFields {
+		games[id] = field
+	}
+
+	return games
+}
+
+func GetGame(id string) (*Field, bool) {
+	mapMu.RLock()
+	defer mapMu.RUnlock()
+	field, ok := activeFields[id]
+
+	return field, ok
+}
 
 func NewField(height, width int, needed int) (*Field, error) {
 	if needed > 4 {
 		return nil, ErrMaxPlayers
 	}
 
+	bytes := make([]byte, 10)
+	rand.Read(bytes)
+	id := base64.URLEncoding.EncodeToString(bytes)
+
 	field := &Field{
+		id:        id,
 		Height:    height,
 		needed:    needed,
 		Width:     width,
 		Board:     make([][]bool, height),
 		Change:    make(chan ChangeDirection),
-		Remove:    make(chan *Gopher),
+		Remove:    make(chan int),
 		mu:        new(sync.Mutex),
 		State:     Initializing,
 		nextCycle: time.NewTicker(100 * time.Millisecond),
@@ -61,6 +91,10 @@ func NewField(height, width int, needed int) (*Field, error) {
 	for i := range field.Board {
 		field.Board[i] = make([]bool, width)
 	}
+
+	mapMu.Lock()
+	defer mapMu.Unlock()
+	activeFields[id] = field
 
 	return field, nil
 }
@@ -192,10 +226,13 @@ func (f *Field) start() {
 	for {
 		select {
 		case dir := <-f.Change:
+			if f.State != InProgress {
+				continue
+			}
 			f.Gophers[dir.Index].Direction = dir.Direction
 			dir.Wait.Done()
-		case gopher := <-f.Remove:
-			f.remove(gopher)
+		case index := <-f.Remove:
+			f.remove(f.Gophers[index])
 			if len(f.Gophers) == 1 {
 				f.end()
 				return
@@ -227,8 +264,15 @@ func (f *Field) end() {
 	if _, ok := f.nextCycle.(*time.Ticker); ok {
 		f.nextCycle.(*time.Ticker).Stop()
 	}
+	mapMu.Lock()
+	delete(activeFields, f.id)
+	mapMu.RUnlock()
 }
 
 func (f *Field) broadcast() {
-
+	paths := make(map[int][]Coordinate)
+	for i, gopher := range f.Gophers {
+		copy(paths[i], gopher.Path)
+		gopher.Paths <- paths
+	}
 }
