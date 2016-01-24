@@ -20,4 +20,7 @@ func InitRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/join", controllers.Join)
 	mux.HandleFunc("/game", controllers.Game)
 	mux.HandleFunc("/websocket", controllers.WebSocket)
+	mux.HandleFunc("/game.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./views/game.js")
+	})
 }
