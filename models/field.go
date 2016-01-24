@@ -191,7 +191,7 @@ func (f *Field) increment(g *Gopher) bool {
 	f.Board[g.X][g.Y] = true
 	g.Score++
 
-	if f.cycles > 100 {
+	if f.cycles > 1000 {
 		f.Board[g.Path[0].X][g.Path[0].Y] = false
 		g.Path = append(g.Path[:0], g.Path[1:]...)
 	} else {
