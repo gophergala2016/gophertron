@@ -1,11 +1,10 @@
 package controllers
 
 import (
+	"encoding/json"
 	"log"
 	"sync"
 	"time"
-
-	"encoding/json"
 
 	"github.com/gophergala2016/gophertron/models"
 	"github.com/gorilla/websocket"
