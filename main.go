@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	db "github.com/gophergala2016/gophertron/models/database"
 	"github.com/gophergala2016/gophertron/routes"
 )
 
@@ -14,12 +15,12 @@ var prof = flag.Bool("prof", false, "profile")
 func main() {
 	flag.Parse()
 	log.SetFlags(log.Lshortfile)
+	db.SetupDB()
 
 	if *prof {
 		log.Println("Enabling pprof")
 		go func() { log.Fatal(http.ListenAndServe("localhost:6060", nil)) }()
 	}
-	log.Println("done")
 
 	mux := http.NewServeMux()
 	routes.InitRoutes(mux)
