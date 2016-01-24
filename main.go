@@ -22,6 +22,6 @@ func main() {
 	}
 
 	routes.InitRoutes()
-	log.Println("Serving on ", *addr)
+	log.Printf("Serving on %s", *addr)
 	log.Fatal(http.ListenAndServe(*addr, http.DefaultServeMux))
 }
