@@ -55,7 +55,7 @@ func listener(conn *websocket.Conn, ID int, field *models.Field) {
 	}
 }
 
-func sendPath(conn *websocket.Conn, paths chan map[string]models.GopherInfo, close chan bool, notify chan struct{}) {
+func sendPath(conn *websocket.Conn, ID int, gopher *models.Gopher, field *models.Field) {
 	send := make(chan []byte)
 	wait := new(sync.WaitGroup)
 
@@ -69,21 +69,31 @@ func sendPath(conn *websocket.Conn, paths chan map[string]models.GopherInfo, clo
 		}
 	}()
 
+	//initial keepalive loop
+	go func() {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			field.PreGameRemove(gopher)
+			return
+		}
+		listener(conn, ID, field)
+	}()
+
 	for {
 		select {
-		case paths := <-paths:
+		case paths := <-gopher.Paths:
 			wait.Add(1)
 			bytes, _ := json.Marshal(paths)
 			send <- bytes
-		case <-notify:
+		case notify := <-gopher.Notify:
 			wait.Add(1)
-			send <- []byte("countdown")
-		case victory := <-close:
+			send <- []byte(notify)
+		case victory := <-gopher.Close:
+			wait.Wait()
 			if victory {
 				wait.Add(1)
 				send <- []byte("victory")
 			}
-			wait.Wait()
 			conn.Close()
 			return
 		}

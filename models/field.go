@@ -143,12 +143,18 @@ func (f *Field) setPos(g *Gopher, X, Y int) {
 }
 
 func (f *Field) remove(gopher *Gopher) {
+	f.PreGameRemove(gopher)
+	gopher.Close <- false
+}
+
+//To be used when the game hasn't started yet
+func (f *Field) PreGameRemove(gopher *Gopher) {
 	for i, currGopher := range f.Gophers {
 		if currGopher == gopher {
 			f.Gophers, f.Gophers[len(f.Gophers)-1] = append(f.Gophers[:i], f.Gophers[i+1:]...), nil
 		}
 	}
-	gopher.Close <- false
+
 }
 
 func (f *Field) PrintBoard() {
@@ -216,7 +222,7 @@ func (f *Field) start() {
 	mapMu.Unlock()
 	go func() {
 		for _, g := range f.Gophers {
-			g.Notify <- struct{}{}
+			g.Notify <- "countdown"
 		}
 	}()
 	time.Sleep(5 * time.Second)

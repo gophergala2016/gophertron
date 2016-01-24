@@ -117,5 +117,5 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go listener(conn, index, field)
-	go sendPath(conn, gopher.Paths, gopher.Close, gopher.Notify)
+	go sendPath(conn, index, gopher, field)
 }
