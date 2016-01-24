@@ -174,6 +174,12 @@ func (f *Field) PrintBoard() {
 
 func (f *Field) increment(g *Gopher) bool {
 	g.Path = append(g.Path, Coordinate{g.X, g.Y})
+	if (g.X == -1 || g.X == f.Width) || (g.Y == -1 || g.Y == f.Height) {
+		//collision detected
+		log.Println("bounds")
+		return true
+	}
+
 	switch g.Direction {
 	case Up:
 		g.Y--
@@ -183,11 +189,6 @@ func (f *Field) increment(g *Gopher) bool {
 		g.X--
 	case Right:
 		g.X++
-	}
-
-	if (g.X == -1 || g.X == f.Width) || (g.Y == -1 || g.Y == f.Height) {
-		//collision detected
-		return true
 	}
 
 	if f.Board[g.X][g.Y] {
@@ -258,6 +259,7 @@ func (f *Field) start() {
 					//fmt.Println(i, " collided")
 					//gopher collided, clear it's path and remove it
 					//from the field
+					f.broadcast()
 					f.clearPath(gopher)
 					f.remove(gopher)
 
@@ -265,6 +267,7 @@ func (f *Field) start() {
 						f.end()
 						return
 					}
+					continue
 				}
 			}
 			f.broadcast()
