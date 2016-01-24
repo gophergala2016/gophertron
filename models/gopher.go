@@ -21,12 +21,14 @@ type Gopher struct {
 	Path      []Coordinate
 	Score     int
 	Paths     chan map[string]GopherInfo
+	Notify    chan struct{}
 	Close     chan bool
 }
 
 func NewGopher() *Gopher {
 	return &Gopher{
-		Paths: make(chan map[string]GopherInfo),
-		Close: make(chan bool),
+		Paths:  make(chan map[string]GopherInfo),
+		Close:  make(chan bool),
+		Notify: make(chan struct{}),
 	}
 }
