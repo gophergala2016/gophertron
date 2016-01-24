@@ -1,13 +1,12 @@
 package routes
 
 import (
-	"net/http"
-	_ "net/http/pprof"
-
 	"html/template"
+	"net/http"
 
 	"github.com/gophergala2016/gophertron/controllers"
 	"github.com/gophergala2016/gophertron/models"
+	_ "github.com/rakyll/gom/http"
 )
 
 func Main(w http.ResponseWriter, r *http.Request) {
@@ -15,10 +14,10 @@ func Main(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, models.GetGames())
 }
 
-func InitRoutes() {
-	http.HandleFunc("/", Main)
-	http.HandleFunc("/create", controllers.Create)
-	http.HandleFunc("/join", controllers.Join)
-	http.HandleFunc("/game", controllers.Game)
-	http.HandleFunc("/websocket", controllers.WebSocket)
+func InitRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/", Main)
+	mux.HandleFunc("/create", controllers.Create)
+	mux.HandleFunc("/join", controllers.Join)
+	mux.HandleFunc("/game", controllers.Game)
+	mux.HandleFunc("/websocket", controllers.WebSocket)
 }
