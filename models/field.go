@@ -214,6 +214,7 @@ func (f *Field) start() {
 	mapMu.Lock()
 	delete(activeFields, f.ID)
 	mapMu.Unlock()
+	time.Sleep(3)
 
 	for {
 		select {
