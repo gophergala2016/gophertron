@@ -10,10 +10,18 @@ A 2D [Tron](https://en.wikipedia.org/wiki/Tron_(video_game)) clone in Go. Allows
     	enables profiling with gom
 ```
 
+* Controls: <kbd>up</kbd>, <kbd>down</kbd>, <kbd>left</kbd>, <kbd>right</kbd> (self explanatory
 Recommended field dimensions: 100 x 100.
 
 # Demo:
 
-(The game is much better than this, and allows players from multiple machines to compete, this is just a demo)
+(*The game isn't this abrupt and boring, and allows players from multiple machines to compete, this is just a demo*)
 
-![alt text]http://gcommer.com/i/gophertron.gif "thanks gcommer for the video")
+![alt text](http://gcommer.com/i/gophertron.gif "thanks gcommer for the video")
+
+# BUGS:
+
+* Some tiny gaps between walls and players on collision aren't filled well.
+* No score-keeping.
+* All players have the same color.
+* Lack of code documentation, since there was a single developer who didn't care to document the code.
