@@ -1,5 +1,47 @@
 <html>
-  {{range $id, $e := .}}
-  <a href="/join?id={{$id}}">{{len $e.Gophers}}</a>
-  {{end}}
+  <head>
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  </head>
+
+  <div class="mdl-layout mdl-js-layout">
+    <header class="mdl-layout__header">
+      <div class="mdl-layout-icon"></div>
+      <div class="mdl-layout__header-row">
+  	<span class="mdl-layout__title">GopherTron</span>
+      </div>
+    </header>
+    <main class="mdl-layout__content">
+
+      <form action="create">
+	<div class="mdl-textfield mdl-js-textfield">
+	  <input class="mdl-textfield__input" type="number" rows="1" name="height" id="height" required></input>
+	  <label class="mdl-textfield__label" for="height">Field Height</label>
+	</div>
+	<div class="mdl-textfield mdl-js-textfield">
+	  <input class="mdl-textfield__input" type="number" rows="1" name="width" id="width" required></input>
+	  <label class="mdl-textfield__label" for="width">Field Width</label>
+	</div>
+	<div class="mdl-textfield mdl-js-textfield">
+	  <input class="mdl-textfield__input" type="number" rows="1" name="needed" id="needed" min="2" max="4" required></input>
+	  <label class="mdl-textfield__label" for="needed">Maximum Players</label>
+	</div>
+	
+	<button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+	  Create New Game
+	</button>
+      </form>
+      
+      {{range $id, $e := .}}
+      <div class="mdl-card__actions mdl-card--border">
+	<a class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" href="/join?id={{$id}}">
+	  {{len $e.Gophers}}/{{$e.Needed}} Players
+	</a>
+      </div>
+      {{end}}
+    </main>
+  </div>
+
 </html>
