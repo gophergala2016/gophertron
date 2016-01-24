@@ -10,7 +10,8 @@ const (
 )
 
 type Coordinate struct {
-	X, Y int
+	X int `json:"X"`
+	Y int `json:"Y"`
 }
 
 type Gopher struct {
@@ -19,13 +20,13 @@ type Gopher struct {
 	X, Y      int
 	Path      []Coordinate
 	Score     int
-	Paths     chan map[int][]Coordinate
+	Paths     chan map[string][]Coordinate
 	Close     chan struct{}
 }
 
 func NewGopher() *Gopher {
 	return &Gopher{
-		Paths: make(chan map[int][]Coordinate),
+		Paths: make(chan map[string][]Coordinate),
 		Close: make(chan struct{}),
 	}
 }
