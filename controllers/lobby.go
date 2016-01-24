@@ -59,7 +59,7 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{
 		Name:    "game-id",
 		Value:   id,
-		Expires: time.Now().Add(100 * time.Second),
+		Expires: time.Now().Add(10 * time.Second),
 	}
 	http.SetCookie(w, &cookie)
 
