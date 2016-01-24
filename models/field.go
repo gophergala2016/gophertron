@@ -209,12 +209,17 @@ func (f *Field) clearPath(g *Gopher) {
 
 func (f *Field) start() {
 	log.Printf("%s: Starting main game loop.", f.ID)
-	tick := time.NewTicker(10 * time.Millisecond)
+	tick := time.NewTicker(25 * time.Millisecond)
 	defer tick.Stop()
 	mapMu.Lock()
 	delete(activeFields, f.ID)
 	mapMu.Unlock()
-	time.Sleep(3)
+	go func() {
+		for _, g := range f.Gophers {
+			g.Notify <- struct{}{}
+		}
+	}()
+	time.Sleep(5 * time.Second)
 
 	for {
 		select {
