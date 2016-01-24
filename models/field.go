@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -24,7 +26,7 @@ const (
 type Field struct {
 	mu *sync.Mutex //initially used while adding players
 
-	id            string
+	ID            string
 	Height, Width int
 	needed        int //number of players needed to start the game
 
@@ -76,7 +78,7 @@ func NewField(height, width int, needed int) (*Field, error) {
 	id := base64.URLEncoding.EncodeToString(bytes)
 
 	field := &Field{
-		id:        id,
+		ID:        id,
 		Height:    height,
 		needed:    needed,
 		Width:     width,
@@ -204,25 +206,9 @@ func (f *Field) clearPath(g *Gopher) {
 }
 
 func (f *Field) start() {
-	channel := make(chan struct{})
-
-	switch f.nextCycle.(type) {
-	case *time.Ticker:
-		go func() {
-			for {
-				<-f.nextCycle.(time.Ticker).C
-				channel <- struct{}{}
-			}
-		}()
-	default:
-		//testing
-		go func() {
-			for {
-				channel <- <-f.nextCycle.(chan struct{})
-			}
-		}()
-	}
-
+	log.Printf("%s: Starting main game loop.", f.ID)
+	tick := time.NewTicker(10 * time.Millisecond)
+	defer tick.Stop()
 	for {
 		select {
 		case dir := <-f.Change:
@@ -233,11 +219,11 @@ func (f *Field) start() {
 			dir.Wait.Done()
 		case index := <-f.Remove:
 			f.remove(f.Gophers[index])
-			if len(f.Gophers) == 1 {
+			if len(f.Gophers) == 1 || len(f.Gophers) == 0 {
 				f.end()
 				return
 			}
-		case <-channel:
+		case <-tick.C:
 			for _, gopher := range f.Gophers {
 				if f.increment(gopher) {
 					//fmt.Println(i, " collided")
@@ -252,12 +238,14 @@ func (f *Field) start() {
 					}
 				}
 			}
+			f.broadcast()
 			//f.PrintBoard()
 		}
 	}
 }
 
 func (f *Field) end() {
+	log.Printf("%s: ended", f.ID)
 	f.mu.Lock()
 	f.State = Ended
 	f.mu.Unlock()
@@ -265,14 +253,18 @@ func (f *Field) end() {
 		f.nextCycle.(*time.Ticker).Stop()
 	}
 	mapMu.Lock()
-	delete(activeFields, f.id)
-	mapMu.RUnlock()
+	delete(activeFields, f.ID)
+	mapMu.Unlock()
 }
 
 func (f *Field) broadcast() {
-	paths := make(map[int][]Coordinate)
+	paths := make(map[string][]Coordinate)
 	for i, gopher := range f.Gophers {
-		copy(paths[i], gopher.Path)
+		index := strconv.Itoa(i)
+		for _, c := range gopher.Path {
+			paths[index] = append(paths[index], c)
+		}
+
 		gopher.Paths <- paths
 	}
 }
