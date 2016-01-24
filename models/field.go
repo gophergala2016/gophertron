@@ -28,7 +28,7 @@ type Field struct {
 
 	ID            string
 	Height, Width int
-	needed        int //number of players needed to start the game
+	Needed        int //number of players needed to start the game
 
 	Gophers []*Gopher
 	Board   [][]bool
@@ -79,7 +79,7 @@ func NewField(height, width int, needed int) (*Field, error) {
 	field := &Field{
 		ID:     id,
 		Height: height,
-		needed: needed,
+		Needed: needed,
 		Width:  width,
 		Board:  make([][]bool, height),
 		Change: make(chan ChangeDirection),
@@ -128,7 +128,7 @@ func (f *Field) Add(g *Gopher) (int, error) {
 		}
 	}
 
-	if len(f.Gophers) == f.needed {
+	if len(f.Gophers) == f.Needed {
 		f.State = InProgress
 		go f.start()
 	}
@@ -179,9 +179,11 @@ func (f *Field) increment(g *Gopher) bool {
 		g.X++
 	}
 
-	if g.X == f.Height || g.Y == f.Width {
+	if (g.X == -1 || g.X == f.Width) || (g.Y == -1 || g.Y == f.Height) {
+		//collision detected
 		return true
 	}
+
 	if f.Board[g.X][g.Y] {
 		return true
 	}
@@ -189,8 +191,9 @@ func (f *Field) increment(g *Gopher) bool {
 	f.Board[g.X][g.Y] = true
 	g.Score++
 
-	if f.cycles > 10 {
+	if f.cycles > 100 {
 		f.Board[g.Path[0].X][g.Path[0].Y] = false
+		g.Path = append(g.Path[:0], g.Path[1:]...)
 	} else {
 		f.cycles++
 	}
@@ -216,13 +219,16 @@ func (f *Field) start() {
 		select {
 		case dir := <-f.Change:
 			if f.State != InProgress {
+				dir.Wait.Done()
 				continue
 			}
 			currDir := f.Gophers[dir.Index].Direction
 			if (currDir == Up || currDir == Down) && (dir.Direction == Up || dir.Direction == Down) {
+				dir.Wait.Done()
 				continue
 			}
 			if (currDir == Left || currDir == Right) && (dir.Direction == Left || dir.Direction == Right) {
+				dir.Wait.Done()
 				continue
 			}
 
@@ -280,7 +286,6 @@ func (f *Field) broadcast() {
 		var coordinates []Coordinate
 		for _, c := range gopher.Path {
 			coordinates = append(coordinates, c)
-			//paths[index].Coordinate = append(paths[index].Coordinate, c)
 		}
 
 		paths[index] = GopherInfo{coordinates, colors[i]}
